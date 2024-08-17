@@ -6,6 +6,7 @@ using Shop.Common.Models;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Shop.Common.Services;
 using Play.Common.Services;
+using Play.Identity.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,18 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
+
+IdentityServerSettings identityServerSettings = builder.Configuration.GetSection(nameof(IdentityServerSettings)).Get<IdentityServerSettings>();
+
+builder.Services.AddIdentityServer()
+                .AddAspNetIdentity<ApplicationUser>()
+                .AddInMemoryApiScopes(identityServerSettings.ApiScopes)
+                .AddInMemoryClients(identityServerSettings.Clients)
+                .AddInMemoryIdentityResources(identityServerSettings.IdentityResources)
+                .AddDeveloperSigningCredential();
+
+
+
 builder.Services.AddRazorPages();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -50,6 +63,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseIdentityServer();
 
 app.UseAuthorization();
 
