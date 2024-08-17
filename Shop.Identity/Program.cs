@@ -24,6 +24,7 @@ IdentityServerSettings identityServerSettings = builder.Configuration.GetSection
 builder.Services.AddIdentityServer()
                 .AddAspNetIdentity<ApplicationUser>()
                 .AddInMemoryApiScopes(identityServerSettings.ApiScopes)
+                .AddInMemoryApiResources(identityServerSettings.ApiResources)
                 .AddInMemoryClients(identityServerSettings.Clients)
                 .AddInMemoryIdentityResources(identityServerSettings.IdentityResources)
                 .AddDeveloperSigningCredential();
