@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Shop.Identity.Data;
 using Shop.Identity;
 using Shop.Common.Models;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Shop.Common.Services;
+using Play.Common.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +20,9 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.R
 builder.Services.AddRazorPages();
 
 builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration);
 
 builder.Services.AddSwaggerGen();
 
