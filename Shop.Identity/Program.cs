@@ -28,6 +28,28 @@ builder.Services.AddIdentityServer()
                 .AddInMemoryIdentityResources(identityServerSettings.IdentityResources)
                 .AddDeveloperSigningCredential();
 
+var googleClientId = builder.Configuration["GoogleClientId"];
+var googleClientSecret = builder.Configuration["GoogleClientSecret"];
+var microsoftClientId = builder.Configuration["MicrosoftClientId"];
+var microsoftClientSecret = builder.Configuration["MicrosoftClientSecret"];
+var facebookClientId = builder.Configuration["FacebookClientId"];
+var facebookClientSecret = builder.Configuration["FacebookClientSecret"];
+
+builder.Services.AddAuthentication()
+            .AddGoogle("Google", options =>
+            {
+                options.SignInScheme = IdentityConstants.ExternalScheme;
+                options.ClientId = googleClientId;
+                options.ClientSecret = googleClientSecret;
+            })
+            .AddMicrosoftAccount(options => {
+                options.ClientId = microsoftClientId;
+                options.ClientSecret = microsoftClientSecret;
+            }).AddFacebook(facebookOptions =>
+            {
+                facebookOptions.AppId = facebookClientId;
+                facebookOptions.AppSecret = facebookClientSecret;
+            });
 
 
 builder.Services.AddRazorPages();
