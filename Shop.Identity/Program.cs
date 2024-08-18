@@ -29,6 +29,8 @@ builder.Services.AddIdentityServer()
                 .AddInMemoryIdentityResources(identityServerSettings.IdentityResources)
                 .AddDeveloperSigningCredential();
 
+builder.Services.AddLocalApiAuthentication();
+
 var googleClientId = builder.Configuration["GoogleClientId"];
 var googleClientSecret = builder.Configuration["GoogleClientSecret"];
 var microsoftClientId = builder.Configuration["MicrosoftClientId"];

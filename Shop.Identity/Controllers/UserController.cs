@@ -5,8 +5,11 @@ using Shop.Identity.Data;
 using Shop.Identity.Dtos;
 using Shop.Common.Models;
 using Shop.Identity.Extensions;
+using Microsoft.AspNetCore.Authorization;
+using static IdentityServer4.IdentityServerConstants;
 namespace Shop.Identity.Controllers;
 
+	[Authorize(Policy = LocalApi.PolicyName)]
 	public static class UserController
 	{
 	    public static void MapApplicationUserEndpoints (this IEndpointRouteBuilder routes)
