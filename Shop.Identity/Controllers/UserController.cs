@@ -7,9 +7,10 @@ using Shop.Common.Models;
 using Shop.Identity.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using static IdentityServer4.IdentityServerConstants;
+using Shop.Common;
 namespace Shop.Identity.Controllers;
 
-	[Authorize(Policy = LocalApi.PolicyName)]
+	[Authorize(Policy = LocalApi.PolicyName, Roles = Roles.Admin)]
 	public static class UserController
 	{
 	    public static void MapApplicationUserEndpoints (this IEndpointRouteBuilder routes)

@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Shop.Cart.Dtos;
+using Shop.Cart.Extensions;
 using Shop.Cart.Models;
 using Shop.Common.Clients;
 using Shop.Common.Models;
@@ -15,9 +17,9 @@ namespace Shop.Cart.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class CartController : ControllerBase
     {
+        private const string AdminRole = "Admin";
         private readonly CartContext _context;
         private readonly IHttpShopClient<CatalogItem> _httpContextAccessor;
         private readonly IHttpShopClient<ApplicationUser> _httpContextAccessorUser;
@@ -26,29 +28,44 @@ namespace Shop.Cart.Controllers
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
-            _httpContextAccessorUser = httpContextAccessorUser;
+            // _httpContextAccessorUser = httpContextAccessorUser;
         }
 
         // GET: api/Cart
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CartItemDto>>> GetCartItemDto()
+        public async Task<ActionResult<IEnumerable<CartItemDto>>>GetCartItems(Guid userId)
         {
-            var catalogItems = await _httpContextAccessor.GetItemsAsync("https://localhost:7078", "/api/Catalog");
-            return await _context.CartItems.Select(x => new CartItemDto {
-                Id = x.Id,
-                Catalog = catalogItems.FirstOrDefault(c => c.Id == x.CatalogId),
-                CatalogId = x.CatalogId,
-                UserId = x.UserId,
-                User = null,
-                Quantity = x.Quantity,
-                AcquiredDate = x.AcquiredDate
-            }).ToListAsync();
+            var currentUserId = User.FindFirstValue("sub");
+            if (Guid.Parse(currentUserId) != userId)
+            {
+                if (!User.IsInRole(AdminRole))
+                {
+                    return Unauthorized();
+                }
+            }
+
+            var catalogItemEntities = await _httpContextAccessor.GetItemsAsync("https://localhost:7078", "/api/Catalog");
+            var cartItemEntities = await _context.CartItems.Where(item => item.UserId == userId).ToListAsync();
+            var itemIds = cartItemEntities.Select(item => item.CatalogId);
+            // var user = await _httpContextAccessorUser.GetItemAsync("https://localhost:7078", $"/api/user/{userId}");
+            var inventoryItemDtos = cartItemEntities.Select(cartItem =>
+            {
+                var catalogItem = catalogItemEntities.Single(catalogItem => catalogItem.Id == cartItem.CatalogId);
+                return cartItem.AsDto(catalogItem.Name, catalogItem.Description, catalogItem.Price, catalogItem.CreatedDate, new ApplicationUser { Id = userId});
+            });
+
+            return Ok(inventoryItemDtos);
         }
 
         // GET: api/Cart/5
         [HttpGet("{id}")]
         public async Task<ActionResult<CartItemDto>> GetCartItemDto(long id)
         {
+            if (id == default(long))
+            {
+                return BadRequest();
+            }
+
             var cartItem = await _context.CartItems.FindAsync(id);
             var catalogItem = await _httpContextAccessor.GetItemAsync("https://localhost:7078", $"/api/Catalog/{cartItem.CatalogId}");
             if (cartItem == null)
@@ -70,6 +87,7 @@ namespace Shop.Cart.Controllers
         // PUT: api/Cart/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize(Roles = AdminRole)]
         public async Task<IActionResult> PutCartItemDto(long id, CartItem cartItemDto)
         {
             if (id != cartItemDto.Id)
@@ -101,6 +119,7 @@ namespace Shop.Cart.Controllers
         // POST: api/Cart
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize(Roles = AdminRole)]
         public async Task<ActionResult<CartItem>> PostCartItemDto(CartItem cartItemDto)
         {
             _context.CartItems.Add(cartItemDto);
@@ -111,6 +130,7 @@ namespace Shop.Cart.Controllers
 
         // DELETE: api/Cart/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = AdminRole)]
         public async Task<IActionResult> DeleteCartItemDto(long id)
         {
             var cartItemDto = await _context.CartItems.FindAsync(id);

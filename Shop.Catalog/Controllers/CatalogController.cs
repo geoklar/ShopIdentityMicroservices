@@ -13,9 +13,10 @@ namespace Shop.Catalog.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = AdminRole)]
     public class CatalogController : ControllerBase
     {
+        private const string AdminRole = "Admin";
         private readonly CatalogContext _context;
 
         public CatalogController(CatalogContext context)

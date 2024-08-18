@@ -7,6 +7,11 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Shop.Common.Services;
 using Play.Common.Services;
 using Play.Identity.Settings;
+using Shop.Identity.Settings;
+using System.Configuration;
+using Microsoft.OpenApi.Models;
+using Shop.Identity.HostedServices;
+using Shop.Identity.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +21,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+var identitySettings = builder.Configuration.GetSection(nameof(IdentitySettings));
+builder.Services.Configure<IdentitySettings>(identitySettings)
+    .AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddRoles<ApplicationRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 IdentityServerSettings identityServerSettings = builder.Configuration.GetSection(nameof(IdentityServerSettings)).Get<IdentityServerSettings>();
@@ -30,6 +38,15 @@ builder.Services.AddIdentityServer()
                 .AddDeveloperSigningCredential();
 
 builder.Services.AddLocalApiAuthentication();
+builder.Services.AddControllers();
+
+builder.Services.AddHostedService<IdentitySeedHostedService>();
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Shop.Identity", Version = "v1"});
+});
+
 
 var googleClientId = builder.Configuration["GoogleClientId"];
 var googleClientSecret = builder.Configuration["GoogleClientSecret"];
@@ -81,7 +98,7 @@ else
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Play.Identity.Service v1"));
 };
 
 app.UseHttpsRedirection();
@@ -98,5 +115,7 @@ app.UseEndpoints(endpoints =>
                 endpoints.MapControllers();
                 endpoints.MapRazorPages();
             });
+
+app.MapApplicationUserEndpoints();
 
 app.Run();
