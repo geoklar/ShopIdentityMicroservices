@@ -13,7 +13,6 @@ namespace Shop.Catalog.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = AdminRole)]
     public class CatalogController : ControllerBase
     {
         private const string AdminRole = "Admin";
@@ -26,6 +25,7 @@ namespace Shop.Catalog.Controllers
 
         // GET: api/Catalog
         [HttpGet]
+        [Authorize(Policies.Read)]
         public async Task<ActionResult<IEnumerable<CatalogItem>>> GetCatalogItems()
         {
             return await _context.CatalogItems.ToListAsync();
@@ -33,6 +33,7 @@ namespace Shop.Catalog.Controllers
 
         // GET: api/Catalog/5
         [HttpGet("{id}")]
+        [Authorize(Policies.Read)]
         public async Task<ActionResult<CatalogItem>> GetCatalogItem(long id)
         {
             var catalogItem = await _context.CatalogItems.FindAsync(id);
@@ -45,9 +46,11 @@ namespace Shop.Catalog.Controllers
             return catalogItem;
         }
 
+    
         // PUT: api/Catalog/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize(Policies.Write)]
         public async Task<IActionResult> PutCatalogItem(long id, CatalogItem catalogItem)
         {
             if (id != catalogItem.Id)
@@ -79,6 +82,7 @@ namespace Shop.Catalog.Controllers
         // POST: api/Catalog
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize(Policies.Write)]
         public async Task<ActionResult<CatalogItem>> PostCatalogItem(CatalogItem catalogItem)
         {
             _context.CatalogItems.Add(catalogItem);
@@ -89,6 +93,7 @@ namespace Shop.Catalog.Controllers
 
         // DELETE: api/Catalog/5
         [HttpDelete("{id}")]
+        [Authorize(Policies.Write)]
         public async Task<IActionResult> DeleteCatalogItem(long id)
         {
             var catalogItem = await _context.CatalogItems.FindAsync(id);

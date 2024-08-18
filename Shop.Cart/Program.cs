@@ -6,6 +6,7 @@ using Shop.Common.Models;
 using Shop.Common.Extensions;
 using Shop.Common.Clients;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Shop.Cart;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,20 @@ builder.Services.AddDbContext<CartContext>(options =>
     options.UseSqlServer(connectionString));
 
 builder.Services.AddJwtBearerAuthentication();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(Policies.Read, policy =>
+    {
+        policy.RequireRole("Admin", "Consumer");
+        policy.RequireClaim("scope", "cart.readaccess", "cart.fullaccess");
+    });
+    options.AddPolicy(Policies.Write, policy =>
+    {
+        policy.RequireRole("Admin", "Consumer");
+        policy.RequireClaim("scope", "cart.writeaccess", "cart.fullaccess");
+    });
+});
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

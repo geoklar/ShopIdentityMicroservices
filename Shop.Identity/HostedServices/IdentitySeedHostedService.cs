@@ -26,7 +26,7 @@ public class IdentitySeedHostedService : IHostedService
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
         await CreateRoleIfNotExistsAsync(Roles.Admin, roleManager);
-        await CreateRoleIfNotExistsAsync(Roles.Player, roleManager);
+        await CreateRoleIfNotExistsAsync(Roles.Consumer, roleManager);
 
         var adminUser = await userManager.FindByEmailAsync(_identitySettings.AdminUserEmail);
 

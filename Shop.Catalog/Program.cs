@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Shop.Catalog.Models;
 using Shop.Common.Identity;
 using Microsoft.OpenApi.Models;
+using Shop.Catalog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,21 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 // Add services to the container.
 builder.Services.AddDbContext<CatalogContext>(options =>
     options.UseSqlServer(connectionString));
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(Policies.Read, policy =>
+    {
+        policy.RequireRole("Admin");
+        policy.RequireClaim("scope", "catalog.readaccess", "catalog.fullaccess");
+    });
+
+    options.AddPolicy(Policies.Write, policy =>
+    {
+        policy.RequireRole("Admin");
+        policy.RequireClaim("scope", "catalog.writeaccess", "catalog.fullaccess");
+    });
+});
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

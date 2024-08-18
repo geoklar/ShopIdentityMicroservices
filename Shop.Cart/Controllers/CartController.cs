@@ -33,15 +33,13 @@ namespace Shop.Cart.Controllers
 
         // GET: api/Cart
         [HttpGet]
+        [Authorize(Policies.Read)]
         public async Task<ActionResult<IEnumerable<CartItemDto>>>GetCartItems(Guid userId)
         {
             var currentUserId = User.FindFirstValue("sub");
-            if (Guid.Parse(currentUserId) != userId)
+            if (userId != Guid.Parse(currentUserId) && !User.IsInRole(AdminRole))
             {
-                if (!User.IsInRole(AdminRole))
-                {
-                    return Unauthorized();
-                }
+                return Unauthorized();
             }
 
             var catalogItemEntities = await _httpContextAccessor.GetItemsAsync("https://localhost:7078", "/api/Catalog");
@@ -59,6 +57,7 @@ namespace Shop.Cart.Controllers
 
         // GET: api/Cart/5
         [HttpGet("{id}")]
+        [Authorize(Policies.Read)]
         public async Task<ActionResult<CartItemDto>> GetCartItemDto(long id)
         {
             if (id == default(long))
@@ -87,12 +86,18 @@ namespace Shop.Cart.Controllers
         // PUT: api/Cart/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        [Authorize(Roles = AdminRole)]
+        [Authorize(Policies.Write)]
         public async Task<IActionResult> PutCartItemDto(long id, CartItem cartItemDto)
         {
             if (id != cartItemDto.Id)
             {
                 return BadRequest();
+            }
+
+            var currentUserId = User.FindFirstValue("sub");
+            if (cartItemDto.UserId != Guid.Parse(currentUserId) && !User.IsInRole(AdminRole))
+            {
+                return Unauthorized();
             }
 
             _context.Entry(cartItemDto).State = EntityState.Modified;
@@ -119,9 +124,14 @@ namespace Shop.Cart.Controllers
         // POST: api/Cart
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        [Authorize(Roles = AdminRole)]
+        [Authorize(Policies.Write)]
         public async Task<ActionResult<CartItem>> PostCartItemDto(CartItem cartItemDto)
         {
+            var currentUserId = User.FindFirstValue("sub");
+            if (cartItemDto.UserId != Guid.Parse(currentUserId) && !User.IsInRole(AdminRole))
+            {
+                return Unauthorized();
+            }
             _context.CartItems.Add(cartItemDto);
             await _context.SaveChangesAsync();
 
@@ -130,13 +140,19 @@ namespace Shop.Cart.Controllers
 
         // DELETE: api/Cart/5
         [HttpDelete("{id}")]
-        [Authorize(Roles = AdminRole)]
+        [Authorize(Policies.Write)]
         public async Task<IActionResult> DeleteCartItemDto(long id)
         {
+            var currentUserId = User.FindFirstValue("sub");
             var cartItemDto = await _context.CartItems.FindAsync(id);
             if (cartItemDto == null)
             {
                 return NotFound();
+            }
+
+            if (cartItemDto.UserId != Guid.Parse(currentUserId) && !User.IsInRole(AdminRole))
+            {
+                return Unauthorized();
             }
 
             _context.CartItems.Remove(cartItemDto);
