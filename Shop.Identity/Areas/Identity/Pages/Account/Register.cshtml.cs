@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading;
@@ -131,6 +132,13 @@ namespace Shop.Identity.Areas.Identity.Pages.Account
                     _logger.LogInformation("User created a new account with password.");
 
                     await _userManager.AddToRoleAsync(user, Roles.Consumer);
+                    await _userManager.AddClaimsAsync(user, new Claim[]
+                    { 
+                        new Claim(Auditor.Cart, UserClaims.Cart_ReadAccess), 
+                        new Claim(Auditor.Catalog, UserClaims.Catalog_ReadAccess),
+                        new Claim(Auditor.Cart, UserClaims.Cart_WriteAccess), 
+                        new Claim(Auditor.Catalog, UserClaims.Catalog_WriteAccess)
+                    });
 
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);

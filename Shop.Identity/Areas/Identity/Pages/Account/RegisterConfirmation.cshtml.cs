@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
+using Shop.Common;
 using Shop.Common.Models;
 
 namespace Shop.Identity.Areas.Identity.Pages.Account
@@ -70,7 +71,7 @@ namespace Shop.Identity.Areas.Identity.Pages.Account
                 EmailConfirmationUrl = Url.Page(
                     "/Account/ConfirmEmail",
                     pageHandler: null,
-                    values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
+                    values: new { area = Auditor.Identity, userId = userId, code = code, returnUrl = returnUrl },
                     protocol: Request.Scheme);
             }
 

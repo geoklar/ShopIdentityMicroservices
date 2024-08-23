@@ -1,8 +1,18 @@
 
+using System.Collections.Generic;
+using System.Security.Claims;
+using IdentityModel;
+using IdentityServer4;
+using IdentityServer4.Hosting.LocalApiAuthentication;
+using IdentityServer4.Models;
+using IdentityServer4.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Shop.Common;
 using Shop.Common.Models;
+using Shop.Identity.Data;
 using Shop.Identity.Settings;
 
 namespace Shop.Identity.HostedServices;
@@ -40,6 +50,11 @@ public class IdentitySeedHostedService : IHostedService
 
             await userManager.CreateAsync(adminUser, _identitySettings.AdminUserPassword);
             await userManager.AddToRoleAsync(adminUser, Roles.Admin);
+            await userManager.AddClaimsAsync(adminUser, new Claim[]
+            { 
+                new Claim(Auditor.Cart, UserClaims.Cart_FullAccess), 
+                new Claim(Auditor.Catalog, UserClaims.Catalog_FullAccess)
+            });
         }
     }
 
@@ -51,7 +66,41 @@ public class IdentitySeedHostedService : IHostedService
 
         if (!roleExists)
         {
-            await roleManager.CreateAsync(new ApplicationRole { Name = role});
+            await roleManager.CreateAsync(new ApplicationRole { Name = role });
         }
+    }
+}
+
+public class ProfileService : IProfileService
+{
+    protected UserManager<ApplicationUser> _userManager;
+    private readonly IdentitySettings _identitySettings;
+
+    public ProfileService(UserManager<ApplicationUser> userManager, IOptions<IdentitySettings> identitySettings)
+    {
+        _userManager = userManager;
+        _identitySettings = identitySettings.Value;
+    }
+
+    public async Task GetProfileDataAsync(ProfileDataRequestContext context)
+    {
+        var user = await _userManager.FindByIdAsync(context.Subject.FindFirst("sub").Value);
+        var adminUserRole = await _userManager.GetRolesAsync(user);
+        //>Processing
+        IList<Claim> claims = await _userManager.GetClaimsAsync(user);
+        context.IssuedClaims.AddRange(claims);
+        if (adminUserRole.Count > 0)
+        {
+            Claim roleClaim = new Claim (JwtClaimTypes.Role, adminUserRole.FirstOrDefault());
+            context.IssuedClaims.Add(roleClaim);
+        }
+    }
+
+    public async Task IsActiveAsync(IsActiveContext context)
+    {
+        //>Processing
+        var user = await _userManager.GetUserAsync(context.Subject);
+        
+        context.IsActive = (user != null);
     }
 }

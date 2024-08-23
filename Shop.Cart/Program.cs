@@ -7,6 +7,7 @@ using Shop.Common.Extensions;
 using Shop.Common.Clients;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Shop.Cart;
+using Shop.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,13 +22,13 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(Policies.Read, policy =>
     {
-        policy.RequireRole("Admin", "Consumer");
-        policy.RequireClaim("scope", "cart.readaccess", "cart.fullaccess");
+        policy.RequireRole(Roles.Admin, Roles.Consumer);
+        policy.RequireClaim("appscopes", Claims.Cart_ReadAccess, Claims.Cart_FullAccess);
     });
     options.AddPolicy(Policies.Write, policy =>
     {
-        policy.RequireRole("Admin", "Consumer");
-        policy.RequireClaim("scope", "cart.writeaccess", "cart.fullaccess");
+        policy.RequireRole(Roles.Admin, Roles.Consumer);
+        policy.RequireClaim("appscopes", Claims.Cart_WriteAccess, Claims.Cart_FullAccess);
     });
 });
 

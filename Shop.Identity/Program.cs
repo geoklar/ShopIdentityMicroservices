@@ -6,12 +6,11 @@ using Shop.Common.Models;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Shop.Common.Services;
 using Play.Common.Services;
-using Play.Identity.Settings;
-using Shop.Identity.Settings;
-using System.Configuration;
 using Microsoft.OpenApi.Models;
 using Shop.Identity.HostedServices;
 using Shop.Identity.Controllers;
+using Shop.Common.Settings;
+using Shop.Identity.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,7 +34,10 @@ builder.Services.AddIdentityServer()
                 .AddInMemoryApiResources(identityServerSettings.ApiResources)
                 .AddInMemoryClients(identityServerSettings.Clients)
                 .AddInMemoryIdentityResources(identityServerSettings.IdentityResources)
+                .AddProfileService<ProfileService>()
                 .AddDeveloperSigningCredential();
+
+
 
 builder.Services.AddLocalApiAuthentication();
 builder.Services.AddControllers();
@@ -54,6 +56,7 @@ var microsoftClientId = builder.Configuration["MicrosoftClientId"];
 var microsoftClientSecret = builder.Configuration["MicrosoftClientSecret"];
 var facebookClientId = builder.Configuration["FacebookClientId"];
 var facebookClientSecret = builder.Configuration["FacebookClientSecret"];
+ServiceSettings serviceSettings = builder.Configuration.GetSection(nameof(ServiceSettings)).Get<ServiceSettings>();
 
 builder.Services.AddAuthentication()
             .AddGoogle("Google", options =>
@@ -78,7 +81,7 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration);
-
+                
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();

@@ -1,5 +1,5 @@
 	using IdentityServer4.Models;
-	namespace Play.Identity.Settings
+	namespace Shop.Identity.Settings
 	{
 	    public class IdentityServerSettings
 	    {
@@ -10,7 +10,10 @@
 	            new IdentityResource[]
 	            {
 	                new IdentityResources.OpenId(),
-	                new IdentityResources.Profile()
+	                new IdentityResources.Profile(),
+					new IdentityResource("appscopes", new[] {"cart.fullaccess", "catalog.fullaccess", "cart.readaccess", "catalog.readaccess", "cart.writeaccess", "catalog.writeaccess"}),
+	                new IdentityResource("roles", new[] {"role"}),
+					
 	            };
 	    }
 }

@@ -3,6 +3,7 @@ using Shop.Catalog.Models;
 using Shop.Common.Identity;
 using Microsoft.OpenApi.Models;
 using Shop.Catalog;
+using Shop.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,14 +16,13 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(Policies.Read, policy =>
     {
-        policy.RequireRole("Admin");
-        policy.RequireClaim("scope", "catalog.readaccess", "catalog.fullaccess");
+        policy.RequireRole(Roles.Admin, Roles.Consumer);
+        policy.RequireClaim("appscopes", Claims.Catalog_ReadAccess, Claims.Catalog_FullAccess);
     });
-
     options.AddPolicy(Policies.Write, policy =>
     {
-        policy.RequireRole("Admin");
-        policy.RequireClaim("scope", "catalog.writeaccess", "catalog.fullaccess");
+        policy.RequireRole(Roles.Admin, Roles.Consumer);
+        policy.RequireClaim("appscopes", Claims.Catalog_WriteAccess, Claims.Catalog_FullAccess);
     });
 });
 builder.Services.AddControllers();
