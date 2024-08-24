@@ -1,0 +1,21 @@
+services:
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq_identity
+    ports: 
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+  ldap:
+   container_name: contosoOpenLdap
+   image: osixia/openldap:latest
+   ports:
+     - "389:389"
+     - "636:636"
+   env_file:
+     - ./ldap.env
+   volumes:
+     - ./ldap:/data/ldif
+volumes: 
+  rabbitmqdata:

@@ -11,6 +11,13 @@ using Shop.Identity.HostedServices;
 using Shop.Identity.Controllers;
 using Shop.Common.Settings;
 using Shop.Identity.Settings;
+using IdentityServer.LdapExtension.Extensions;
+using IdentityServer.LdapExtension.UserModel;
+using IdentityServer.LdapExtension;
+using Microsoft.AspNetCore.Identity.UI.V4.Pages.Account.Internal;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using IdentityServer4;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +34,7 @@ builder.Services.Configure<IdentitySettings>(identitySettings)
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 IdentityServerSettings identityServerSettings = builder.Configuration.GetSection(nameof(IdentityServerSettings)).Get<IdentityServerSettings>();
+var identityServerLdap = builder.Configuration.GetSection(nameof(IdentityServerLdap));
 
 builder.Services.AddIdentityServer()
                 .AddAspNetIdentity<ApplicationUser>()
@@ -35,6 +43,9 @@ builder.Services.AddIdentityServer()
                 .AddInMemoryClients(identityServerSettings.Clients)
                 .AddInMemoryIdentityResources(identityServerSettings.IdentityResources)
                 .AddProfileService<ProfileService>()
+                // [START of Usage of LDAP]
+                // .AddLdapUsers<OpenLdapAppUser>(identityServerLdap, UserStore.InMemory)
+                // [END of usage of LDAP]
                 .AddDeveloperSigningCredential();
 
 
@@ -59,6 +70,23 @@ var facebookClientSecret = builder.Configuration["FacebookClientSecret"];
 ServiceSettings serviceSettings = builder.Configuration.GetSection(nameof(ServiceSettings)).Get<ServiceSettings>();
 
 builder.Services.AddAuthentication()
+            .AddOpenIdConnect("aad", "Azure AD", options =>
+            {
+                options.SignInScheme = IdentityConstants.ExternalScheme;
+                options.SignOutScheme = IdentityServerConstants.SignoutScheme;//SignoutScheme;
+
+                options.Authority = "https://login.windows.net/829b600a-a85f-4f39-b5a3-a9e8a479642e";
+                options.ClientId = "a01766da-2993-4a8a-a52b-db6da55d47e7";
+                options.ResponseType = OpenIdConnectResponseType.IdToken;
+                options.CallbackPath = "/signin-aad";
+                options.SignedOutCallbackPath = "/signout-callback-aad";
+                options.RemoteSignOutPath = "/signout-aad";
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    NameClaimType = "name",
+                    RoleClaimType = "role"
+                };
+            })
             .AddGoogle("Google", options =>
             {
                 options.SignInScheme = IdentityConstants.ExternalScheme;
