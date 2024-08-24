@@ -11,6 +11,9 @@ using Shop.Identity.HostedServices;
 using Shop.Identity.Controllers;
 using Shop.Common.Settings;
 using Shop.Identity.Settings;
+using IdentityServer4;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +59,9 @@ var microsoftClientId = builder.Configuration["MicrosoftClientId"];
 var microsoftClientSecret = builder.Configuration["MicrosoftClientSecret"];
 var facebookClientId = builder.Configuration["FacebookClientId"];
 var facebookClientSecret = builder.Configuration["FacebookClientSecret"];
+var azureClientId = builder.Configuration["AzureClientId"];
+var azureTenantId = builder.Configuration["AzureTenantId"];
+
 ServiceSettings serviceSettings = builder.Configuration.GetSection(nameof(ServiceSettings)).Get<ServiceSettings>();
 
 builder.Services.AddAuthentication()
@@ -72,7 +78,23 @@ builder.Services.AddAuthentication()
             {
                 facebookOptions.AppId = facebookClientId;
                 facebookOptions.AppSecret = facebookClientSecret;
+            }).AddOpenIdConnect("aad", "Azure AD", options =>
+            {
+                options.SignInScheme = IdentityConstants.ExternalScheme;
+                options.SignOutScheme = IdentityServerConstants.SignoutScheme;;
+                options.Authority = $"https://login.windows.net/{azureTenantId}";
+                options.ClientId = azureClientId;
+                options.ResponseType = OpenIdConnectResponseType.IdToken;
+                options.CallbackPath = "/signin-aad";
+                options.SignedOutCallbackPath = "/signout-callback-aad";
+                options.RemoteSignOutPath = "/signout-aad";
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    NameClaimType = "name",
+                    RoleClaimType = "role"
+                };
             });
+
 
 
 builder.Services.AddRazorPages();
