@@ -3,6 +3,7 @@
 #nullable disable
 
 using System;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -11,8 +12,10 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Options;
 using Shop.Common;
 using Shop.Common.Models;
+using Shop.Identity.Settings;
 
 namespace Shop.Identity.Areas.Identity.Pages.Account
 {
@@ -21,11 +24,15 @@ namespace Shop.Identity.Areas.Identity.Pages.Account
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IEmailSender _sender;
+        private readonly IdentitySettings _identitySettings;
 
-        public RegisterConfirmationModel(UserManager<ApplicationUser> userManager, IEmailSender sender)
+        public RegisterConfirmationModel(UserManager<ApplicationUser> userManager, 
+                                        IEmailSender sender,
+                                        IOptions<IdentitySettings> identitySettings)
         {
             _userManager = userManager;
             _sender = sender;
+            _identitySettings = identitySettings.Value;
         }
 
         /// <summary>
@@ -63,6 +70,17 @@ namespace Shop.Identity.Areas.Identity.Pages.Account
             Email = email;
             // Once you add a real email sender, you should remove this code that lets you confirm the account
             DisplayConfirmAccountLink = false;
+            user.Budget = _identitySettings.StartingBudget;
+            await _userManager.UpdateAsync(user);
+            await _userManager.AddToRoleAsync(user, Roles.Consumer);
+            await _userManager.AddClaimsAsync(user, new Claim[]
+            { 
+                new Claim("appscopes", UserClaims.Cart_ReadAccess), 
+                new Claim("appscopes", UserClaims.Catalog_ReadAccess),
+                new Claim("appscopes", UserClaims.Cart_WriteAccess), 
+                new Claim("appscopes", UserClaims.Catalog_WriteAccess)
+            });
+
             if (DisplayConfirmAccountLink)
             {
                 var userId = await _userManager.GetUserIdAsync(user);

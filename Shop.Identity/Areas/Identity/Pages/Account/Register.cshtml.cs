@@ -134,10 +134,10 @@ namespace Shop.Identity.Areas.Identity.Pages.Account
                     await _userManager.AddToRoleAsync(user, Roles.Consumer);
                     await _userManager.AddClaimsAsync(user, new Claim[]
                     { 
-                        new Claim(Auditor.Cart, UserClaims.Cart_ReadAccess), 
-                        new Claim(Auditor.Catalog, UserClaims.Catalog_ReadAccess),
-                        new Claim(Auditor.Cart, UserClaims.Cart_WriteAccess), 
-                        new Claim(Auditor.Catalog, UserClaims.Catalog_WriteAccess)
+                        new Claim("appscopes", UserClaims.Cart_ReadAccess), 
+                        new Claim("appscopes", UserClaims.Catalog_ReadAccess),
+                        new Claim("appscopes", UserClaims.Cart_WriteAccess), 
+                        new Claim("appscopes", UserClaims.Catalog_WriteAccess)
                     });
 
                     var userId = await _userManager.GetUserIdAsync(user);
