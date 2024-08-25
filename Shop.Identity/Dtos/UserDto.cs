@@ -2,8 +2,8 @@ using System.ComponentModel.DataAnnotations;
 namespace Shop.Identity.Dtos;
 public record UserDto(
 	Guid Id,
-	string Username,
-	string Email,
+	string? Username,
+	string? Email,
 	decimal Budget
 );
 public record UpdateUserDto(

@@ -10,7 +10,7 @@
 				user.Id,
 				user?.UserName,
 				user?.Email,
-				user.Budget
+				user?.Budget ?? 0
 			);
 		}
 	}

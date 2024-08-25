@@ -6,8 +6,8 @@ using Shop.Identity.Dtos;
 using Shop.Common.Models;
 using Shop.Identity.Extensions;
 using Microsoft.AspNetCore.Authorization;
-using static IdentityServer4.IdentityServerConstants;
 using Shop.Common;
+using static Duende.IdentityServer.IdentityServerConstants;
 namespace Shop.Identity.Controllers;
 
 	[Authorize(Policy = LocalApi.PolicyName, Roles = Roles.Admin)]

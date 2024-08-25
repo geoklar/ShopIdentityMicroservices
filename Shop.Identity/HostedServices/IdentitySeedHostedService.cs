@@ -1,11 +1,9 @@
 
 using System.Collections.Generic;
 using System.Security.Claims;
+using Duende.IdentityServer.Models;
+using Duende.IdentityServer.Services;
 using IdentityModel;
-using IdentityServer4;
-using IdentityServer4.Hosting.LocalApiAuthentication;
-using IdentityServer4.Models;
-using IdentityServer4.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -38,23 +36,26 @@ public class IdentitySeedHostedService : IHostedService
         await CreateRoleIfNotExistsAsync(Roles.Admin, roleManager);
         await CreateRoleIfNotExistsAsync(Roles.Consumer, roleManager);
 
-        var adminUser = await userManager.FindByEmailAsync(_identitySettings.AdminUserEmail);
-
-        if (adminUser == null)
+        if (!string.IsNullOrEmpty(_identitySettings.AdminUserEmail) && !string.IsNullOrEmpty(_identitySettings.AdminUserPassword))
         {
-            adminUser = new ApplicationUser
-            {
-                UserName = _identitySettings.AdminUserEmail,
-                Email = _identitySettings.AdminUserEmail
-            };
+            var adminUser = await userManager.FindByEmailAsync(_identitySettings.AdminUserEmail);
 
-            await userManager.CreateAsync(adminUser, _identitySettings.AdminUserPassword);
-            await userManager.AddToRoleAsync(adminUser, Roles.Admin);
-            await userManager.AddClaimsAsync(adminUser, new Claim[]
-            { 
-                new Claim(Auditor.Cart, UserClaims.Cart_FullAccess), 
-                new Claim(Auditor.Catalog, UserClaims.Catalog_FullAccess)
-            });
+            if (adminUser == null)
+            {
+                adminUser = new ApplicationUser
+                {
+                    UserName = _identitySettings.AdminUserEmail,
+                    Email = _identitySettings.AdminUserEmail
+                };
+
+                await userManager.CreateAsync(adminUser, _identitySettings.AdminUserPassword);
+                await userManager.AddToRoleAsync(adminUser, Roles.Admin);
+                await userManager.AddClaimsAsync(adminUser, new Claim[]
+                { 
+                    new Claim(Auditor.Cart, UserClaims.Cart_FullAccess), 
+                    new Claim(Auditor.Catalog, UserClaims.Catalog_FullAccess)
+                });
+            }
         }
     }
 
@@ -84,15 +85,25 @@ public class ProfileService : IProfileService
 
     public async Task GetProfileDataAsync(ProfileDataRequestContext context)
     {
-        var user = await _userManager.FindByIdAsync(context.Subject.FindFirst("sub").Value);
-        var adminUserRole = await _userManager.GetRolesAsync(user);
-        //>Processing
-        IList<Claim> claims = await _userManager.GetClaimsAsync(user);
-        context.IssuedClaims.AddRange(claims);
-        if (adminUserRole.Count > 0)
+        var userId = context?.Subject?.FindFirst("sub")?.Value;
+        if (!string.IsNullOrEmpty(userId))
         {
-            Claim roleClaim = new Claim (JwtClaimTypes.Role, adminUserRole.FirstOrDefault());
-            context.IssuedClaims.Add(roleClaim);
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user != null)
+            {
+
+                var adminUserRole = await _userManager.GetRolesAsync(user);
+                IList<Claim> claims = await _userManager.GetClaimsAsync(user);
+
+                if (claims?.Count > 0)
+                    context?.IssuedClaims.AddRange(claims);
+
+                if (adminUserRole.Count > 0)
+                {
+                    Claim roleClaim = new Claim (JwtClaimTypes.Role, adminUserRole?.FirstOrDefault() ?? string.Empty);
+                    context?.IssuedClaims.Add(roleClaim);
+                }
+            }
         }
     }
 
