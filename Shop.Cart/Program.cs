@@ -11,6 +11,7 @@ using Shop.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
+const string AllowedOriginSetting = "AllowedOrigin";
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<CartContext>(options =>
@@ -51,8 +52,15 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
+
+    app.UseCors(option => {
+            option.WithOrigins(builder?.Configuration[AllowedOriginSetting] ?? string.Empty)
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+        });
 }
 
 app.UseHttpsRedirection();

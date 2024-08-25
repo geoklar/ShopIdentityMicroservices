@@ -7,6 +7,8 @@ using Shop.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
+const string AllowedOriginSetting = "AllowedOrigin";
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 // Add services to the container.
 builder.Services.AddDbContext<CatalogContext>(options =>
@@ -40,8 +42,15 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
+
+    app.UseCors(option => {
+            option.WithOrigins(builder?.Configuration[AllowedOriginSetting] ?? string.Empty)
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+        });
 }
 
 app.UseHttpsRedirection();

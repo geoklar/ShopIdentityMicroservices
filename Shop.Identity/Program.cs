@@ -15,6 +15,7 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using Duende.IdentityServer;
 using Duende.IdentityServer.Models;
+using System.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +24,8 @@ var connectionString = builder?.Configuration.GetConnectionString("DefaultConnec
 builder?.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder?.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+const string AllowedOriginSetting = "AllowedOrigin";
 
 var identitySettings = builder?.Configuration.GetSection(nameof(IdentitySettings));
 if (identitySettings != null)
@@ -144,8 +147,15 @@ if (app != null)
 
     if (app.Environment.IsDevelopment())
     {
+        app.UseDeveloperExceptionPage();
         app.UseSwagger();
         app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Play.Identity.Service v1"));
+
+        app.UseCors(option => {
+            option.WithOrigins(builder?.Configuration[AllowedOriginSetting] ?? string.Empty)
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+        });
     };
 
     // app.UseCookiePolicy(new CookiePolicyOptions()
