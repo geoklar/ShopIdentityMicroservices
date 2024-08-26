@@ -368,6 +368,11 @@ app.UseEndpoints(endpoints =>
             endpoints.MapRazorPages();
         });
 ```
+- Add Razor Page support
+
+```bash
+builder.Services.AddRazorPages();
+```
 
 ## Enable HTTPS and configure port
 
