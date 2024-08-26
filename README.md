@@ -1,4 +1,20 @@
 
+# Shop Store
+
+Before we dive into the course topics, let's review the fictional client application that your microservices will serve and which parts of the backend system architecture will be covered by this repository.
+
+Imagine a store where the consumer can purchase different type of products for domestic use.
+
+There will be a catalog of products that will allow the consumer to purchase items like vegetables, fruits or other similar.
+
+These products have a price, and to purchase them, the consumer will need to hold the right amount of some sort of currency, which we will just call budget.
+
+Once a consumer successfully purchases a product, it then goes into his shopping cart where it will be available for him to select for his final order.
+
+Now, the client side of this application, the app or apps that run in the consumer's device, are already being built by your company's client team, so you don't have to worry about them.
+
+
+
 ## Create Identity Microservice
 
 **Step 1:** Create a new web app project for our identity microservice run:
@@ -351,4 +367,203 @@ app.UseEndpoints(endpoints =>
             endpoints.MapControllers();
             endpoints.MapRazorPages();
         });
+```
+
+## Enable HTTPS and configure port
+
+- Open and edit launchSettings.json (Ctrl+P):
+
+```bash
+{
+  "$schema": "http://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:53424",
+      "sslPort": 44397
+    }
+  },
+  "profiles": {
+    "Play.Identity": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:5001;http://localhost:5214",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
+```
+
+
+## Configure Debugging
+
+- Create .vscode folder on the root project folder
+
+```bash
+md .vscode
+cd .vscode
+```
+- Create launch.json file
+
+```bash
+new-item launch.json
+```
+- Add the following code to launch.json file
+
+```bash
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // Use IntelliSense to find out which attributes exist for C# debugging
+            // Use hover for the description of the existing attributes
+            // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
+            "name": ".NET Core Launch (web)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceFolder}/bin/Debug/net8.0/Shop.Identity.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/Views"
+            }
+        },
+        {
+            "name": ".NET Core Attach",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
+        }
+    ]
+}
+```
+
+- Create tasks.json file
+
+```bash
+new-item tasks.json
+```
+- Add the following code to tasks.json file
+
+```bash
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/Shop.Identity.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "publish",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/Shop.Identity.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "watch",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "watch",
+                "run",
+                "${workspaceFolder}/Shop.Identity.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}
+```
+
+## Add .gitignore
+
+- Create .gitignore file on the root project folder
+
+```bash
+new-item .gitignore
+```
+
+- Add the following code to .gitignore file
+
+```bash
+*.swp
+*.*~
+project.lock.json
+.DS_Store
+*.pyc
+nupkg/
+
+# Visual Studio Code
+.vscode/
+
+# Rider
+.idea/
+
+# Visual Studio
+.vs/
+
+# Fleet
+.fleet/
+
+# Code Rush
+.cr/
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+msbuild.log
+msbuild.err
+msbuild.wrn
+
 ```
