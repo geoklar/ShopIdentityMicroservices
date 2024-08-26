@@ -374,6 +374,219 @@ app.UseEndpoints(endpoints =>
 builder.Services.AddRazorPages();
 ```
 
+## SMTP Support
+
+
+**Step 1:** Create a new class library project to use it as a common library:
+
+```bash
+dotnet new classlib -o Shop.Common
+```
+
+#### Command Breakdown
+**`dotnet new`**
+
+This is the general command used to create a new .NET project or file based on a specified template. It's part of the .NET CLI (Command-Line Interface) tools.
+
+**`classlib`**
+
+This specifies the type of project you want to create. In this case, **classlib** stands for "class library." A class library is a project that contains reusable code (like classes, methods, interfaces, etc.) that can be shared across multiple other projects, such as web applications, desktop apps, or other class libraries.
+
+**`-o Shop.Common`**
+
+The **-o** (short for --output) option specifies the directory where the new project will be created.
+Shop.Common is the name of the directory that will be created. The project files and code for the class library will be placed in this directory. The name Shop.Common suggests that this class library is intended to hold common or shared code that could be used across different parts of the Shop application.
+
+- Open into VS code
+
+```bash
+Code . -r Shop.Common
+```
+
+**Step 2:** Install the following nuget packages:
+
+```bash
+dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
+dotnet add package Microsoft.AspNetCore.Identity
+dotnet add package SendGrid
+```
+
+**Step 3:** Create a new folder called Models and create a new file ApplicationUser.cs
+
+```bash
+md Models
+cd Models
+new-item ApplicationUser.cs
+```
+**Add the following code to ApplicationUser.cs file:**
+
+```bash
+using Microsoft.AspNetCore.Identity;
+namespace Shop.Common.Models;
+public class ApplicationUser : IdentityUser<Guid>
+{
+    public decimal Budget { get; set; }
+}
+
+```
+
+**Step 4:** Create a new file ApplicationRole.cs
+
+```bash
+new-item ApplicationRole.cs
+```
+
+**Add the following code to ApplicationRole.cs file:**
+
+```bash
+using Microsoft.AspNetCore.Identity;
+namespace Shop.Common.Models;
+public class ApplicationRole : IdentityRole<Guid> {}
+```
+```bash
+cd..
+```
+
+**Step 5:** Create a new folder called Services and create a new file AuthMessageSenderOptions.cs
+
+```bash
+md Services
+cd Services
+new-item AuthMessageSenderOptions.cs
+```
+**Add the following code to AuthMessageSenderOptions.cs file:**
+
+```bash
+namespace Shop.Common.Services
+{
+    public class AuthMessageSenderOptions
+    {
+        public string? SendGridKey { get; set; }
+    }
+}
+
+```
+**Step 6:** Create a new file EmailSender.cs
+
+```bash
+new-item EmailSender.cs
+```
+
+**Add the following code to EmailSender.cs file:**
+
+```bash
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using SendGrid;
+using SendGrid.Helpers.Mail;
+using Shop.Common.Services;
+namespace Play.Common.Services;
+public class EmailSender : IEmailSender
+{
+    private readonly ILogger _logger;
+    public EmailSender(IOptions<AuthMessageSenderOptions> optionsAccessor,
+                       ILogger<EmailSender> logger)
+    {
+        Options = optionsAccessor.Value;
+        _logger = logger;
+    }
+    public AuthMessageSenderOptions Options { get; } //Set with Secret Manager.
+    public async Task SendEmailAsync(string toEmail, string subject, string message)
+    {
+        if (string.IsNullOrEmpty(Options.SendGridKey))
+        {
+            throw new Exception("Null SendGridKey");
+        }
+        await Execute(Options.SendGridKey, subject, message, toEmail);
+    }
+    public async Task Execute(string apiKey, string subject, string message, string toEmail)
+    {
+        var client = new SendGridClient(apiKey);
+        var msg = new SendGridMessage()
+        {
+            From = new EmailAddress("geoklar@hotmail.com", subject),
+            Subject = subject,
+            PlainTextContent = message,
+            HtmlContent = message
+        };
+        msg.AddTo(new EmailAddress(toEmail));
+        // Disable click tracking.
+        // See https://sendgrid.com/docs/User_Guide/Settings/tracking.html
+        msg.SetClickTracking(false, false);
+        var response = await client.SendEmailAsync(msg);
+        _logger.LogInformation(response.IsSuccessStatusCode 
+                               ? $"Email to {toEmail} queued successfully!"
+                               : $"Failure Email to {toEmail}");
+    }
+}
+```
+```bash
+cd..
+```
+
+**Step 6:** Set-up user secrets for development 
+
+```bash
+dotnet user-secrets init
+```
+
+**Register SenGrid Key:**
+
+```bash
+dotnet user-secrets set SendGridKey SG.<#YPiKt74HTimHeGUMQQ0vrcg.aUMQQ0............#>
+```
+```bash
+cd..
+```
+
+Secrets are stored on the following location:
+
+`%APPDATA%/Microsoft/UserSecrets/<WebAppName-userSecretsId>`
+
+**Step 7:** Build and create Shop.Common nuget package
+
+```bash
+dotnet build .\Shop.Common.csproj
+```
+
+```bash
+dotnet pack .\Shop.Common.csproj -p:PackageVersion=1.0.0 -o ../Shop.Packages
+```
+
+**Step 8:** Configure local nuget source
+
+```bash
+dotnet nuget add source "<#AbolutePath#>\Play.Packages"
+```
+Nuget source information can be found on the following location:
+
+`%appdata%\NuGet\NuGet.Config`
+
+**Step 9:** Add Shop.Common package as dependency to Shop.Identity
+
+```bash
+dotnet add package Shop.Common
+```
+
+**Step 10:** Replace Shop.Identity.Models.ApplicationUser & Shop.Identity.Models.ApplicationRole references with the new created from Shop.Common.Models 
+
+**Step 11:** Edit Program.cs file adding SMTP support
+
+```bash
+builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration);
+```
+
+**Step 12:** Disable default account verification
+
+- Edit /Areas/Identity/Pages/Account/RegisterConfirmation.cshtml.cs and update:
+
+```bash
+DisplayConfirmAccountLink = false
+```
+
+
 ## Enable HTTPS and configure port
 
 - Open and edit launchSettings.json (Ctrl+P):
