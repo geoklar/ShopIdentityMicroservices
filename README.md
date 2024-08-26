@@ -505,7 +505,7 @@ public class EmailSender : IEmailSender
         var client = new SendGridClient(apiKey);
         var msg = new SendGridMessage()
         {
-            From = new EmailAddress("geoklar@hotmail.com", subject),
+            From = new EmailAddress("smtp_user@smtp_provider.com", subject),
             Subject = subject,
             PlainTextContent = message,
             HtmlContent = message
