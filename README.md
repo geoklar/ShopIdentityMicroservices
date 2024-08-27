@@ -54,7 +54,7 @@ new-item ApplicationUser.cs
 ```bash
 using Microsoft.AspNetCore.Identity;
 namespace Shop.Identity.Models;
-public class ApplicationUser : IdentityUser<Guid>
+public class ApplicationUser : IdentityUser<ApplicationUser, ApplicationRole, Guid>
 {
     public decimal Budget { get; set; }
 }
@@ -72,7 +72,7 @@ new-item ApplicationRole.cs
 ```bash
 using Microsoft.AspNetCore.Identity;
 namespace Shop.Identity.Models;
-public class ApplicationRole : IdentityRole<ApplicationUser, ApplicationRole, Guid> {}
+public class ApplicationRole : IdentityRole<Guid> {}
 ```
 ```bash
 cd..
