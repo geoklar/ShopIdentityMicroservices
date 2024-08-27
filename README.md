@@ -54,7 +54,7 @@ new-item ApplicationUser.cs
 ```bash
 using Microsoft.AspNetCore.Identity;
 namespace Shop.Identity.Models;
-public class ApplicationUser : IdentityUser<ApplicationUser, ApplicationRole, Guid>
+public class ApplicationUser : IdentityUser<Guid>
 {
     public decimal Budget { get; set; }
 }
@@ -77,7 +77,26 @@ public class ApplicationRole : IdentityRole<Guid> {}
 ```bash
 cd..
 ```
-**Step 4:** Scaffold Register, Login, LogOut, and RegisterConfirmation
+
+**Step 4:** Modify ApplicationDbContext
+
+```bash
+dusing Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Shop.Identity.Models;
+
+namespace Shop.Identity.Data;
+
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>
+{
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        : base(options)
+    {
+    }
+}
+```
+
+**Step 5:** Scaffold Register, Login, LogOut, and RegisterConfirmation
 
 **Install needed packages for scaffolding:**
 ```bash
@@ -111,7 +130,7 @@ In this case, Shop.Identity.Data.ApplicationDbContext refers to the ApplicationD
     3. **Account.Logout**: The logout functionality that allows users to sign out.
     4. **Account.RegisterConfirmation**: A page that confirms successful registration and typically provides next steps (like verifying email).
 
-**Step 5:** Replace IdentityUser with ApplicationUser
+**Step 6:** Replace IdentityUser with ApplicationUser
 
 Replace IdentityUser with ApplicationUser in the following files:
 - _LoginPartial.cshtml
@@ -122,7 +141,7 @@ Replace IdentityUser with ApplicationUser in the following files:
 - RegisterConfirmationModel.cshtml.cs
 - Program.cs
 
-**Step 6:** Scaffold User controller
+**Step 7:** Scaffold User controller
 
 **Install needed packages for scaffolding:**
 ```bash
@@ -169,7 +188,7 @@ Controllers is the directory where the generated UserController will be placed. 
 The **-namespace** option specifies the namespace to use for the generated controller.
 Shop.Identity.Controllers is the namespace that will be applied to the generated UserController. This is important for organizing and referencing your code correctly within the project.
 
-**Step 7:** Create and run migrations
+**Step 8:** Create and run migrations
 
 - Create migrations.
 *Delete if exists any under folder Data\Migrations
@@ -184,7 +203,7 @@ dotnet ef migrations add Initialize -o Data\Migrations
 dotnet ef database update
 ```
 
-**Step 8:** Create User DTO
+**Step 9:** Create User DTO
 
 ```bash
 md DTOs
@@ -211,7 +230,7 @@ namespace Shop.Identity.DTOs
 }
 ```
 
-**Step 9:** Create extension methods for UserController
+**Step 10:** Create extension methods for UserController
 
 **Create new folder Extensions and file UserDtoExtension.cs:**
 ```bash
@@ -261,7 +280,7 @@ public static class UserDtoExtension
 }
 ```
 
-**Step 10:** Update code to UserController.cs
+**Step 11:** Update code to UserController.cs
 
 ```bash
 public static class UserController
@@ -324,7 +343,7 @@ public static class UserController
 }
 ```
 
-**Step 11:** Add initial Budget to newly created user
+**Step 12:** Add initial Budget to newly created user
 
 - Update Register.cshtml.cs file
 
@@ -340,7 +359,7 @@ private const decimal StartingBudget = 100;
 user.Budget = StartingBudget;
 ```
 
-**Step 12:** Update code to Program.cs
+**Step 13:** Update code to Program.cs
 
 - Add Swagger support
 
