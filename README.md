@@ -41,16 +41,10 @@ This flag stands for **"Use Local DB."** It configures the project to use a loca
 
 The **-o** option specifies the output directory where the project will be created. In this case, Shop.Identity is the name of the folder that will be created to contain your new web application. If this directory doesn't exist, it will be created.
 
-**Step 2:** Add Microsoft.AspNetCore.Identity nuget package to the project
+**Step 2:** Create a new folder called Models and create a new class ApplicationUser.cs
 
 ```bash
 cd Shop.Identity
-dotnet add package Microsoft.AspNetCore.Identity
-```
-
-**Step 3:** Create a new folder called Models and create a new class ApplicationUser.cs
-
-```bash
 md Models
 cd Models
 new-item ApplicationUser.cs
@@ -67,7 +61,7 @@ public class ApplicationUser : IdentityUser<Guid>
 
 ```
 
-**Step 4:** Create a new class ApplicationRole.cs
+**Step 3:** Create a new class ApplicationRole.cs
 
 ```bash
 new-item ApplicationRole.cs
@@ -83,7 +77,7 @@ public class ApplicationRole : IdentityRole<Guid> {}
 ```bash
 cd..
 ```
-**Step 5:** Scaffold Register, Login, LogOut, and RegisterConfirmation
+**Step 4:** Scaffold Register, Login, LogOut, and RegisterConfirmation
 
 **Install needed packages for scaffolding:**
 ```bash
@@ -117,7 +111,7 @@ In this case, Shop.Identity.Data.ApplicationDbContext refers to the ApplicationD
     3. **Account.Logout**: The logout functionality that allows users to sign out.
     4. **Account.RegisterConfirmation**: A page that confirms successful registration and typically provides next steps (like verifying email).
 
-**Step 6:** Replace IdentityUser with Applicationuser
+**Step 5:** Replace IdentityUser with ApplicationUser
 
 Replace IdentityUser with ApplicationUser in the following files:
 - _LoginPartial.cshtml
@@ -128,7 +122,7 @@ Replace IdentityUser with ApplicationUser in the following files:
 - RegisterConfirmationModel.cshtml.cs
 - Program.cs
 
-**Step 7:** Scaffold User controller
+**Step 6:** Scaffold User controller
 
 **Install needed packages for scaffolding:**
 ```bash
@@ -175,7 +169,7 @@ Controllers is the directory where the generated UserController will be placed. 
 The **-namespace** option specifies the namespace to use for the generated controller.
 Shop.Identity.Controllers is the namespace that will be applied to the generated UserController. This is important for organizing and referencing your code correctly within the project.
 
-**Step 8:** Create and run migrations
+**Step 7:** Create and run migrations
 
 - Create migrations.
 *Delete if exists any under folder Data\Migrations
@@ -190,7 +184,7 @@ dotnet ef migrations add Initialize -o Data\Migrations
 dotnet ef database update
 ```
 
-**Step 9:** Create User DTO
+**Step 8:** Create User DTO
 
 ```bash
 md DTOs
@@ -217,7 +211,7 @@ namespace Shop.Identity.DTOs
 }
 ```
 
-**Step 10:** Create extension methods for UserController
+**Step 9:** Create extension methods for UserController
 
 **Create new folder Extensions and file UserDtoExtension.cs:**
 ```bash
@@ -267,31 +261,32 @@ public static class UserDtoExtension
 }
 ```
 
-**Step 11:** Update code to UserController.cs
+**Step 10:** Update code to UserController.cs
 
 ```bash
 public static class UserController
 {
     public static void MapApplicationUserEndpoints (this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/api/user").WithTags(nameof(UserDto));
-        group.MapGet("/", async (ApplicationDbContext db) =>
+        var group = routes.MapGroup("/api").WithTags(nameof(UserDto));
+        group.MapGet("/users", async (ApplicationDbContext db) =>
         {
-            return await db.Users.ToListAsync();
+            return await db.Users.Select(u => u.AsUserDto()).ToListAsync();
         })
         .WithName("GetUsers")
         .WithOpenApi();
-        group.MapGet("/{id}", async Task<Results<Ok<UserDto>, NotFound>> (Guid id, ApplicationDbContext db) =>
+        group.MapGet("/user/{id}", async Task<Results<Ok<UserDto>, NotFound>> (Guid id, ApplicationDbContext db) =>
         {
             return await db.Users.AsNoTracking()
+                .Select(u => u.AsUserDto())
                 .FirstOrDefaultAsync(model => model.Id == id)
-                is ApplicationUser model
-                    ? TypedResults.Ok(model.AsUserDto())
+                is UserDto model
+                    ? TypedResults.Ok(model)
                     : TypedResults.NotFound();
         })
         .WithName("GetUserById")
         .WithOpenApi();
-        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (Guid id, UserDto applicationUser, ApplicationDbContext db) =>
+        group.MapPut("/user/{id}", async Task<Results<Ok, NotFound>> (Guid id, UserDto applicationUser, ApplicationDbContext db) =>
         {
             var affected = await db.Users
                 .Where(model => model.Id == id)
@@ -299,22 +294,24 @@ public static class UserController
                     .SetProperty(m => m.Budget, applicationUser.Budget)
                     .SetProperty(m => m.Id, applicationUser.Id)
                     .SetProperty(m => m.UserName, applicationUser.Username)
+                    .SetProperty(m => m.NormalizedEmail, applicationUser.Username.ToUpper())
                     .SetProperty(m => m.Email, applicationUser.Email)
+                    .SetProperty(m => m.NormalizedEmail, applicationUser.Email.ToUpper())
                     );
             return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
         })
         .WithName("UpdateUser")
         .WithOpenApi();
-        group.MapPost("/", async (UserDto userDto, ApplicationDbContext db) =>
+        group.MapPost("/user", async (UserDto userDto, ApplicationDbContext db) =>
         {
             ApplicationUser user = userDto.AsApplicationUser();
             db.Users.Add(user);
             await db.SaveChangesAsync();
             return TypedResults.Created($"/api/user/{user.Id}",user.AsUserDto());
         })
-        .WithName("CreateApplicationUser")
+        .WithName("CreateUser")
         .WithOpenApi();
-        group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (Guid id, ApplicationDbContext db) =>
+        group.MapDelete("/user/{id}", async Task<Results<Ok, NotFound>> (Guid id, ApplicationDbContext db) =>
         {
             var affected = await db.Users
                 .Where(model => model.Id == id)
@@ -327,7 +324,7 @@ public static class UserController
 }
 ```
 
-**Step 12:** Add initial Budget to newly created user
+**Step 11:** Add initial Budget to newly created user
 
 - Update Register.cshtml.cs file
 
@@ -343,7 +340,7 @@ private const decimal StartingBudget = 100;
 user.Budget = StartingBudget;
 ```
 
-**Step 13:** Update code to Program.cs
+**Step 12:** Update code to Program.cs
 
 - Add Swagger support
 
