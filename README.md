@@ -72,7 +72,7 @@ new-item ApplicationRole.cs
 ```bash
 using Microsoft.AspNetCore.Identity;
 namespace Shop.Identity.Models;
-public class ApplicationRole : IdentityRole<Guid> {}
+public class ApplicationRole : IdentityRole<ApplicationUser, ApplicationRole, Guid> {}
 ```
 ```bash
 cd..
